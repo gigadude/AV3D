@@ -85,6 +85,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(InputDir)\bin\*.dll $(OutDir)"
 			/>
 		</Configuration>
 		<Configuration

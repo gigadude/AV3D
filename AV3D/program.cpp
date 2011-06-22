@@ -5,9 +5,23 @@
 #include "glinclude.h"
 #include "glwindow.h"
 
+class AV3DWindow : public GLWindow
+{
+    public:
+    AV3DWindow(HINSTANCE hInstance) : GLWindow(hInstance, "AV3D", 800, 600)
+    {
+    }
+
+    protected:
+    void OnRender()
+    {
+        GLWindow::OnRender();
+    }
+};
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    GLWindow* window = new GLWindow(hInstance, "Limitz AV3D", 800, 600);
+    GLWindow* window = new AV3DWindow(hInstance);
     window->Show();
     window->MainLoop();
 }
