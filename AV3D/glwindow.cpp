@@ -72,7 +72,6 @@ LRESULT CALLBACK GLWindow::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			CREATESTRUCT* create = (CREATESTRUCT*) lParam;
 			instance = (GLWindow*) create->lpCreateParams;
 			SetWindowLongPtr(hwnd, GWL_USERDATA, (LONG_PTR) instance);
-            instance->OnLoad();
 			return 0;
 		}
         case WM_SIZE:

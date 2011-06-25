@@ -64,6 +64,8 @@ LANGUAGE LANG_DUTCH, SUBLANG_DUTCH
 // Shader
 //
 
+IDR_SHADER1             Shader                  "shaders\\fragment.fx"
+IDR_SHADER2             Shader                  "shaders\\vertex.fx"
 #endif    // Dutch (Netherlands) resources
 /////////////////////////////////////////////////////////////////////////////
 

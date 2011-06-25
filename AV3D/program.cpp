@@ -6,15 +6,12 @@
 #include "glwindow.h"
 #include "resource.h"
 
+#include "videowall.h"
+
 class AV3DWindow : public GLWindow
 {
     public:
     AV3DWindow(HINSTANCE hInstance) : GLWindow(hInstance, "AV3D", 800, 600)
-    {
-    }
-
-    protected:
-    void OnLoad()
     {
         glEnable(GL_TEXTURE_2D);
         glShadeModel(GL_SMOOTH);
@@ -23,26 +20,19 @@ class AV3DWindow : public GLWindow
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+        _videoWall = new VideoWall(16, 9);
     }
 
     void OnRender()
     {
         GLWindow::OnRender();
     }
-};
-
-class VideoWall
-{
-    public:
-    VideoWall(int width, int height)
-    {
-        _width = width;
-        _height = height;
-    }
 
     private:
-    int _width, _height;
+    VideoWall* _videoWall;
 };
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
