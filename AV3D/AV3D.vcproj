@@ -172,6 +172,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\glshading.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\glwindow.cpp"
 				>
 			</File>
@@ -190,7 +194,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\exception.h"
+				>
+			</File>
+			<File
 				RelativePath=".\glinclude.h"
+				>
+			</File>
+			<File
+				RelativePath=".\glshading.h"
 				>
 			</File>
 			<File
