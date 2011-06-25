@@ -29,6 +29,7 @@ class GLWindow
     int MainLoop();
 
     protected:
+    virtual void OnLoad() {}
     virtual void OnRender();
     virtual void OnResize(int width, int height);
     virtual void OnKeyDown(int key) {};

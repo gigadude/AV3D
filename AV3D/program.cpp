@@ -4,6 +4,7 @@
 #include "avinclude.h"
 #include "glinclude.h"
 #include "glwindow.h"
+#include "resource.h"
 
 class AV3DWindow : public GLWindow
 {
@@ -13,10 +14,34 @@ class AV3DWindow : public GLWindow
     }
 
     protected:
+    void OnLoad()
+    {
+        glEnable(GL_TEXTURE_2D);
+        glShadeModel(GL_SMOOTH);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearDepth(1.0f);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    }
+
     void OnRender()
     {
         GLWindow::OnRender();
     }
+};
+
+class VideoWall
+{
+    public:
+    VideoWall(int width, int height)
+    {
+        _width = width;
+        _height = height;
+    }
+
+    private:
+    int _width, _height;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
