@@ -176,6 +176,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gltexture.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\glwindow.cpp"
 				>
 			</File>
@@ -203,6 +207,10 @@
 			</File>
 			<File
 				RelativePath=".\glshading.h"
+				>
+			</File>
+			<File
+				RelativePath=".\gltexture.h"
 				>
 			</File>
 			<File
