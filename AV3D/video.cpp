@@ -1,11 +1,7 @@
 #include "video.h"
 
-Frame::Frame()
-{
-    _frame = avcodec_alloc_frame();
-}
 
-Video::Video(const char* filename, FRAME_UPDATED_CALLBACK callback)
+Video::Video(const char* filename, int reqWidth, int reqHeight)
 {
     static bool ls_first = true;
     if (ls_first)
@@ -13,6 +9,8 @@ Video::Video(const char* filename, FRAME_UPDATED_CALLBACK callback)
         av_register_all();
         ls_first = false;
     }
+    _reqWidth = reqWidth;
+    _reqHeight = reqHeight;
 
     _videoStreamIndex = -1;
     _audioStreamIndex = -1;
@@ -20,7 +18,6 @@ Video::Video(const char* filename, FRAME_UPDATED_CALLBACK callback)
     _videoQueue = new AVPacketQueue();
     _audioQueue = new AVPacketQueue();
 
-    _frameUpdatedCallback = callback;
     Load(filename);
 }
 
@@ -66,13 +63,13 @@ void Video::Load(const char* filename)
 
     _swsCtx = sws_getContext(
         _videoCodecCtx->width, _videoCodecCtx->height, _videoCodecCtx->pix_fmt,
-        _videoCodecCtx->width, _videoCodecCtx->height, PIX_FMT_RGB24,
+        _reqWidth, _reqHeight, PIX_FMT_RGB24,
         SWS_BICUBIC, NULL, NULL, NULL);
 
-    int size = avpicture_get_size(PIX_FMT_RGB24, _videoCodecCtx->width, _videoCodecCtx->height);
+    int size = avpicture_get_size(PIX_FMT_RGB24, 256, 256);
     _currentFrame = avcodec_alloc_frame();
     _currentBuffer = (uint8_t*) av_malloc(size * sizeof(uint8_t));
-    avpicture_fill((AVPicture*)_currentFrame, _currentBuffer, PIX_FMT_RGB24, _videoCodecCtx->width, _videoCodecCtx->height);
+    avpicture_fill((AVPicture*)_currentFrame, _currentBuffer, PIX_FMT_RGB24, 256, 256);
 
     _waveout = new WaveOut(this, _audioCodecCtx->sample_rate, _audioCodecCtx->channels, 16);
 }
@@ -82,19 +79,23 @@ void Video::Start()
     CreateThread(NULL, 0, AVStreamProc, this, NULL, NULL);
 }
 
-void Video::NextFrame()
+int Video::NextFrame()
 {
     int frameDone = 0;
     AVFrame* frame = avcodec_alloc_frame();
     AVPacket* packet;
     while (!frameDone && (packet = _videoQueue->Dequeue()) != NULL)
     {
+        if (packet == (AVPacket*)-1) return -1;
         avcodec_decode_video2(_videoCodecCtx, frame, &frameDone, packet);
         av_free_packet(packet);
     }
-    sws_scale(_swsCtx, frame->data, frame->linesize, 0, _videoCodecCtx->height, _currentFrame->data, _currentFrame->linesize);
-    if (_frameUpdatedCallback) _frameUpdatedCallback(this);
+    if (frameDone)
+    {
+        sws_scale(_swsCtx, frame->data, frame->linesize, 0, _videoCodecCtx->height, _currentFrame->data, _currentFrame->linesize);
+    }
     av_free(frame);
+    return frameDone ? 1 : 0;
 }
 
 int Video::NextAudioBuffer(void** buffer, int* len)

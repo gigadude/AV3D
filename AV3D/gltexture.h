@@ -21,6 +21,8 @@ class GLTextureRGB
     GLuint _name;
     int _width, _height;
     const void* _pixels;
+
+    friend class GLShaderProgram;
 };
 
 #endif

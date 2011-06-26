@@ -45,6 +45,7 @@ WaveOut::WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bi
 
 void WaveOut::Start()
 {
+    _started = true;
     for (int i=0; i<4; i++)
     {
         WAVEHDR* hdr = (WAVEHDR*) calloc(1, sizeof(WAVEHDR));
@@ -55,6 +56,7 @@ void WaveOut::Start()
 
 void WaveOut::Stop()
 {
+    _started = false;
 }
 
 void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, DWORD_PTR p1, DWORD_PTR p2)

@@ -88,7 +88,13 @@ int GLShaderProgram::GetUniformIndex(const char *name)
 
 void GLShaderProgram::Link()
 {
+    GLVertex::Declare();
     GLint status;
+    for (int i=0; i<VA_MAX; i++)
+	{
+		const char* name = GLVertex::GetAttributeName((VertexAttribute)i);
+		glBindAttribLocation(_name, i, name);
+	}
     glLinkProgram(_name);
     glGetProgramiv(_name, GL_LINK_STATUS, &status);
     if (status == GL_FALSE) throw new ShaderLinkException();

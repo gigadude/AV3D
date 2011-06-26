@@ -7,7 +7,7 @@
 #include <stdarg.h>
 
 #ifndef FD_MAX_ERROR_MESSAGE
-#define FD_MAX_ERROR_MESSAGE 512
+#define FD_MAX_ERROR_MESSAGE (1<<16)
 #endif
 
 //vsprintf is susceptible to buffer overruns!

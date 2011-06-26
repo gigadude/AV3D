@@ -6,5 +6,5 @@ varying vec4 _vNormal;
 void main()
 {
 	float intensity = max(dot(_vNormal, vec4(0, 0, -1, 0)), 0);
-	gl_FragColor = intensity * texture2D(_uTexture, _vTexCoord);
+	gl_FragColor = texture2D(_uTexture, _vTexCoord);
 }

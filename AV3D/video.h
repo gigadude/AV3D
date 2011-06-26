@@ -12,22 +12,8 @@ class Video;
 
 #define AV_AUDIO_BUFFER_SIZE AVCODEC_MAX_AUDIO_FRAME_SIZE
 
-typedef void (*FRAME_UPDATED_CALLBACK)(Video* sender);
-
 GENERATE_EXCEPTION(FileNotFoundException, Exception);
 GENERATE_EXCEPTION(AVStreamException, Exception);
-
-class Frame
-{
-    public:
-    Frame();
-    const void* PixelData() const;
-
-    private:
-    AVFrame* _frame;
-    uint8_t* _buffer;
-    friend class Video;
-};
 
 class AVPacketQueueItem
 {
@@ -100,7 +86,7 @@ class AVPacketQueue
 class Video : public AudioProvider
 {
     public:
-    Video(const char* filename, FRAME_UPDATED_CALLBACK callback);
+    Video(const char* filename, int reqWidth, int reqHeight);
     ~Video();
 
     void Start();
@@ -111,10 +97,10 @@ class Video : public AudioProvider
     private:
     static DWORD WINAPI AVStreamProc(LPVOID parameter);
     void Load(const char* filename);
-    void NextFrame();
-    int NextAudioBuffer(void** buffer, int* len);
 
-    FRAME_UPDATED_CALLBACK _frameUpdatedCallback;
+public:
+    int NextFrame();
+    int NextAudioBuffer(void** buffer, int* len);
     
     AVPacketQueue* _audioQueue;
     AVPacketQueue* _videoQueue;
@@ -128,6 +114,8 @@ class Video : public AudioProvider
     AVFrame* _currentFrame;
     uint8_t* _currentBuffer;
     WaveOut* _waveout;
+
+    int _reqWidth, _reqHeight;
     int _videoStreamIndex, _audioStreamIndex;
 };
 

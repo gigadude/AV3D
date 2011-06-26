@@ -12,5 +12,5 @@ void main()
 {
 	_vTexCoord = _inTexCoord;
 	_vNormal = _inNormalMatrix * _inNormal;
-	gl_Position = _inModelViewProjection * _inVertex;
+	gl_Position = ftransform(); //_inModelViewProjection * _inVertex;
 }

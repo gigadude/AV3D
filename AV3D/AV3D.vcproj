@@ -172,6 +172,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\glmesh.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\glshading.cpp"
 				>
 			</File>
@@ -185,6 +189,10 @@
 			</File>
 			<File
 				RelativePath=".\program.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\vector.cpp"
 				>
 			</File>
 			<File
@@ -214,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\glmesh.h"
+				>
+			</File>
+			<File
 				RelativePath=".\glshading.h"
 				>
 			</File>
@@ -222,11 +234,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\glvertex.h"
+				>
+			</File>
+			<File
 				RelativePath=".\glwindow.h"
 				>
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\vector.h"
 				>
 			</File>
 			<File

@@ -5,6 +5,8 @@
 
 #include <windows.h>
 #include "glinclude.h"
+#include "gltexture.h"
+#include "glvertex.h"
 #include "exception.h"
 
 GENERATE_EXCEPTION(ShaderException, Exception);
@@ -45,6 +47,20 @@ class GLShaderProgram
     void BindAttribute(unsigned int index, const char* name);
     void BindTexture(GLenum texture, const char* name);
     int  GetUniformIndex(const char* name);
+
+    void SetUniform(int index, const GLTextureRGB* texture)         const { glUniform1i(index, texture->_name); }
+
+	void SetUniform(int index, float value)							const { glUniform1f(index, value); }
+	void SetUniform(int index, float x, float y)					const { glUniform2f(index, x, y); }
+	void SetUniform(int index, float x, float y, float z)			const { glUniform3f(index, x, y, z); }
+	void SetUniform(int index, float x, float y, float z, float w)  const { glUniform4f(index, x, y, z, w); }
+
+	void SetUniform(int index, int value)							const { glUniform1i(index, value); }
+	void SetUniform(int index, int x, int y)						const { glUniform2i(index, x, y); }
+	void SetUniform(int index, int x, int y, int z)					const { glUniform3i(index, x, y, z); }
+	void SetUniform(int index, int x, int y, int z, int w)			const { glUniform4i(index, x, y, z, w); }
+	
+	void SetUniformMatrix(int index, const float* matrix)			const { glUniformMatrix4fv(index, 1, GL_FALSE, matrix); }
 
     void Link();
     void Use();
