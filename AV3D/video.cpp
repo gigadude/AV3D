@@ -17,6 +17,9 @@ Video::Video(const char* filename, FRAME_UPDATED_CALLBACK callback)
     _videoStreamIndex = -1;
     _audioStreamIndex = -1;
 
+    _videoQueue = new AVPacketQueue();
+    _audioQueue = new AVPacketQueue();
+
     _frameUpdatedCallback = callback;
     Load(filename);
 }
@@ -76,47 +79,58 @@ void Video::Load(const char* filename)
 
 void Video::Start()
 {
-    CreateThread(NULL, 0, VideoStreamProc, this, NULL, NULL);
+    CreateThread(NULL, 0, AVStreamProc, this, NULL, NULL);
 }
 
-DWORD WINAPI Video::VideoStreamProc(LPVOID data)
+void Video::NextFrame()
+{
+    int frameDone = 0;
+    AVFrame* frame = avcodec_alloc_frame();
+    AVPacket* packet;
+    while (!frameDone && (packet = _videoQueue->Dequeue()) != NULL)
+    {
+        avcodec_decode_video2(_videoCodecCtx, frame, &frameDone, packet);
+        av_free_packet(packet);
+    }
+    sws_scale(_swsCtx, frame->data, frame->linesize, 0, _videoCodecCtx->height, _currentFrame->data, _currentFrame->linesize);
+    if (_frameUpdatedCallback) _frameUpdatedCallback(this);
+    av_free(frame);
+}
+
+void Video::NextAudioBuffer()
+{
+    int bufferDone = 0;
+    AVPacket* packet;
+    int16_t* audioBuffer = (int16_t*) av_malloc(AV_AUDIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+    while ((packet = _audioQueue->Dequeue()) != NULL)
+    {
+        int bufferSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
+        int consumed = avcodec_decode_audio3(_audioCodecCtx, audioBuffer, &bufferSize, packet);
+        if (consumed >= 0 && bufferSize > 0)        
+        {
+            _waveout->AddBuffer(audioBuffer, bufferSize, NULL);
+            break;
+        }
+    }
+    av_free(audioBuffer);
+}
+
+DWORD WINAPI Video::AVStreamProc(LPVOID data)
 {
     Video* instance = (Video*) data;
     instance->_waveout->Start();
     
-    int16_t* audioBuffer = (int16_t*) av_malloc(AV_AUDIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
-
     AVPacket packet;
-    AVFrame* frame = avcodec_alloc_frame();
-    int frameDone;
-
+    
     while (av_read_frame(instance->_formatCtx, &packet) >= 0)
     {
-        if (packet.stream_index == instance->_videoStreamIndex)
-        {
-            avcodec_decode_video2(instance->_videoCodecCtx, frame, &frameDone, &packet);
-            if (frameDone)
-            {
-                sws_scale(instance->_swsCtx, frame->data, frame->linesize, 0, instance->_videoCodecCtx->height, instance->_currentFrame->data, instance->_currentFrame->linesize);
-                if (instance->_frameUpdatedCallback)
-                {
-                    instance->_frameUpdatedCallback(instance);
-                }
-            }
-        }
-        else if (packet.stream_index == instance->_audioStreamIndex)
-        {
-            int bufferSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-            int length = avcodec_decode_audio3(instance->_audioCodecCtx, audioBuffer, &bufferSize, &packet);
-            if (length > 0)
-            {
-                instance->_waveout->AddBuffer(audioBuffer, bufferSize, NULL);
-            }
-        }
-
-        av_free_packet(&packet);
+        AVPacketQueue* queue = 0;
+        if (packet.stream_index == instance->_videoStreamIndex) queue = instance->_videoQueue;
+        else if (packet.stream_index == instance->_audioStreamIndex) queue = instance->_audioQueue;
+        if (queue) queue->Enqueue(&packet);
+        instance->NextFrame();
+        instance->NextAudioBuffer();
     }
-    av_free(frame);
     return 0;
 }
 

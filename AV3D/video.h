@@ -29,6 +29,69 @@ class Frame
     friend class Video;
 };
 
+class AVPacketQueueItem
+{
+    public:
+    AVPacketQueueItem(AVPacket* packet) { _packet = packet, _next = 0; }
+
+    private:
+    AVPacket* _packet;
+    AVPacketQueueItem* _next;
+
+    friend class AVPacketQueue;
+};
+
+class AVPacketQueue
+{
+    public:
+    AVPacketQueue()  
+    { 
+        _first = NULL;
+        _mutex = CreateMutex(NULL, FALSE, NULL); 
+    }
+    
+    ~AVPacketQueue() 
+    { 
+        WaitForSingleObject(_mutex, INFINITE);
+        while (_first) 
+        { 
+            void* del = _first; 
+            _first = _first->_next; 
+            delete del; 
+        }
+        ReleaseMutex(_mutex);
+        CloseHandle(_mutex);
+    }
+
+    void Enqueue(AVPacket* packet) 
+    { 
+        WaitForSingleObject(_mutex, INFINITE);
+        AVPacketQueueItem** ptr = &_first; 
+        while (*ptr) ptr = &(*ptr)->_next; 
+        *ptr = new AVPacketQueueItem(packet);
+        ReleaseMutex(_mutex);
+    }
+
+    AVPacket* Dequeue() 
+    { 
+        AVPacket* result = NULL;
+        WaitForSingleObject(_mutex, INFINITE);
+        if (_first)
+        {
+            result = _first->_packet;
+            void* del = _first;
+            _first = _first->_next;
+            delete del;
+        }
+        ReleaseMutex(_mutex);
+        return result;
+    }
+
+    private:
+    AVPacketQueueItem* _first;
+    HANDLE _mutex;
+};
+
 class Video
 {
     public:
@@ -41,11 +104,15 @@ class Video
     const void* PixelBuffer() const { return _currentBuffer; }
 
     private:
-    static DWORD WINAPI VideoStreamProc(LPVOID parameter);
+    static DWORD WINAPI AVStreamProc(LPVOID parameter);
     void Load(const char* filename);
-    
+    void NextFrame();
+    void NextAudioBuffer();
+
     FRAME_UPDATED_CALLBACK _frameUpdatedCallback;
     
+    AVPacketQueue* _audioQueue;
+    AVPacketQueue* _videoQueue;
     
     SwsContext* _swsCtx;
     AVFormatContext* _formatCtx;
