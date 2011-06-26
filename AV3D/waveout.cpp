@@ -45,18 +45,16 @@ WaveOut::WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bi
 
 void WaveOut::Start()
 {
-    _started = true;
-    WAVEHDR* hdr = (WAVEHDR*) calloc(4, sizeof(WAVEHDR));
     for (int i=0; i<4; i++)
     {
-        waveOutPrepareHeader(_waveout, hdr + i, sizeof(WAVEHDR));
-        waveOutWrite(_waveout, hdr + i, sizeof(WAVEHDR));
+        WAVEHDR* hdr = (WAVEHDR*) calloc(1, sizeof(WAVEHDR));
+        waveOutPrepareHeader(_waveout, hdr, sizeof(WAVEHDR));
+        waveOutWrite(_waveout, hdr, sizeof(WAVEHDR));
     }
 }
 
 void WaveOut::Stop()
 {
-    _started = false;
 }
 
 void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, DWORD_PTR p1, DWORD_PTR p2)
