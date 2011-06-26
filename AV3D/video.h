@@ -5,9 +5,12 @@
 
 #include <windows.h>
 #include "avinclude.h"
+#include "waveout.h"
 #include "exception.h"
 
 class Video;
+
+#define AV_AUDIO_BUFFER_SIZE AVCODEC_MAX_AUDIO_FRAME_SIZE
 
 typedef void (*FRAME_UPDATED_CALLBACK)(Video* sender);
 
@@ -52,6 +55,7 @@ class Video
     AVCodec* _audioCodec;
     AVFrame* _currentFrame;
     uint8_t* _currentBuffer;
+    WaveOut* _waveout;
     int _videoStreamIndex, _audioStreamIndex;
 };
 

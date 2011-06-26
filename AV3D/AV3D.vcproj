@@ -191,6 +191,10 @@
 				RelativePath=".\video.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\waveout.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -231,6 +235,10 @@
 			</File>
 			<File
 				RelativePath=".\videowall.h"
+				>
+			</File>
+			<File
+				RelativePath=".\waveout.h"
 				>
 			</File>
 			<Filter

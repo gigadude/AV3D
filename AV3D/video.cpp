@@ -70,6 +70,8 @@ void Video::Load(const char* filename)
     _currentFrame = avcodec_alloc_frame();
     _currentBuffer = (uint8_t*) av_malloc(size * sizeof(uint8_t));
     avpicture_fill((AVPicture*)_currentFrame, _currentBuffer, PIX_FMT_RGB24, _videoCodecCtx->width, _videoCodecCtx->height);
+
+    _waveout = new WaveOut(_audioCodecCtx->sample_rate, _audioCodecCtx->channels, 16);
 }
 
 void Video::Start()
@@ -80,6 +82,10 @@ void Video::Start()
 DWORD WINAPI Video::VideoStreamProc(LPVOID data)
 {
     Video* instance = (Video*) data;
+    instance->_waveout->Start();
+    
+    int16_t* audioBuffer = (int16_t*) av_malloc(AV_AUDIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+
     AVPacket packet;
     AVFrame* frame = avcodec_alloc_frame();
     int frameDone;
@@ -98,6 +104,16 @@ DWORD WINAPI Video::VideoStreamProc(LPVOID data)
                 }
             }
         }
+        else if (packet.stream_index == instance->_audioStreamIndex)
+        {
+            int bufferSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
+            int length = avcodec_decode_audio3(instance->_audioCodecCtx, audioBuffer, &bufferSize, &packet);
+            if (length > 0)
+            {
+                instance->_waveout->AddBuffer(audioBuffer, bufferSize, NULL);
+            }
+        }
+
         av_free_packet(&packet);
     }
     av_free(frame);
