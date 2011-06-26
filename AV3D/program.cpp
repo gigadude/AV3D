@@ -7,6 +7,8 @@
 #include "resource.h"
 
 #include "videowall.h"
+#include "video.h"
+
 
 class AV3DWindow : public GLWindow
 {
@@ -33,9 +35,15 @@ class AV3DWindow : public GLWindow
     VideoWall* _videoWall;
 };
 
+void FrameCallback(Video* video)
+{
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    Video* vid = new Video("D:\\phunk.avi", FrameCallback);
+    vid->Start();
+
     GLWindow* window = new AV3DWindow(hInstance);
     window->Show();
     window->MainLoop();
