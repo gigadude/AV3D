@@ -32,7 +32,12 @@ class Frame
 class AVPacketQueueItem
 {
     public:
-    AVPacketQueueItem(AVPacket* packet) { _packet = new AVPacket(*packet), _next = 0; }
+    AVPacketQueueItem(AVPacket* packet) 
+    { 
+        if (packet) _packet = new AVPacket(*packet);
+        else _packet = (AVPacket*) -1;
+        _next = 0; 
+    }
 
     private:
     AVPacket* _packet;

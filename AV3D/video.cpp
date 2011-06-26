@@ -108,6 +108,8 @@ int Video::NextAudioBuffer(void** buffer, int* len)
 
     while ((packet = _audioQueue->Dequeue()) != NULL)
     {
+        if (packet == (AVPacket*)-1) return -1;
+
         int bufferSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
         int consumed = avcodec_decode_audio3(_audioCodecCtx, audioBuffer, &bufferSize, packet);
         if (consumed > 0 && bufferSize > 0)        
@@ -136,8 +138,9 @@ DWORD WINAPI Video::AVStreamProc(LPVOID data)
         if (packet.stream_index == instance->_videoStreamIndex) queue = instance->_videoQueue;
         else if (packet.stream_index == instance->_audioStreamIndex) queue = instance->_audioQueue;
         if (queue) queue->Enqueue(&packet);
-        //instance->NextFrame();
     }
+    instance->_videoQueue->Enqueue(NULL);
+    instance->_audioQueue->Enqueue(NULL);
     return 0;
 }
 

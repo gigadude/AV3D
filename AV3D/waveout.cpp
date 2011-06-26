@@ -73,9 +73,16 @@ void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, 
             int length, bufferDone = 0;
             void* buffer;
             while (!bufferDone) bufferDone = instance->_provider->NextAudioBuffer(&buffer, &length);
-            hdr->dwBufferLength = length;
-            hdr->lpData = (LPSTR) buffer;
-            waveOutPrepareHeader(waveout, hdr, sizeof(WAVEHDR));
-            waveOutWrite(waveout, hdr, sizeof(WAVEHDR));
+            if (bufferDone == -1)
+            {
+                free(hdr);
+            }
+            else
+            {
+                hdr->dwBufferLength = length;
+                hdr->lpData = (LPSTR) buffer;
+                waveOutPrepareHeader(waveout, hdr, sizeof(WAVEHDR));
+                waveOutWrite(waveout, hdr, sizeof(WAVEHDR));
+            }
     }
 }
