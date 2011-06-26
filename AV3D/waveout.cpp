@@ -1,9 +1,8 @@
 #include "waveout.h"
 
-WaveOut::WaveOut(int sampleRate, int nrChannels, int bitsPerSample)
+WaveOut::WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bitsPerSample)
 {
-    _cache = 0;
-    _mutex = CreateMutex(NULL, FALSE, NULL);
+    _provider = provider;
 
     WAVEFORMATEXTENSIBLE fmt;
 	fmt.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE);
@@ -42,48 +41,22 @@ WaveOut::WaveOut(int sampleRate, int nrChannels, int bitsPerSample)
 	
     MMRESULT error = waveOutOpen(&_waveout, WAVE_MAPPER, &fmt.Format, (DWORD_PTR) Callback, (DWORD_PTR) this, CALLBACK_FUNCTION);
     if (error != MMSYSERR_NOERROR) throw new WaveOutException("Could not open the audio device (0x%08X)", error);
-    
-    waveOutPause(_waveout);
-}
-
-void WaveOut::AddBuffer(const void* data, size_t length, const void* parameter)
-{
-    static int inBuffer = 0;
-
-    WAVEHDR* hdr = (WAVEHDR*) calloc(1, sizeof(WAVEHDR) + length);
-    hdr->dwBufferLength = length;
-    hdr->lpData = ((char*)hdr) + sizeof(WAVEHDR);
-    hdr->dwUser = (DWORD_PTR) parameter;
-    memcpy(hdr->lpData, data, length);
- 
-    if (inBuffer < 4)
-    {
-        waveOutPrepareHeader(_waveout, hdr, sizeof(WAVEHDR));
-        waveOutWrite(_waveout, hdr, sizeof(WAVEHDR));
-        inBuffer++;
-    }
-    else
-    {
-        WaitForSingleObject(_mutex, INFINITE);
-
-        CachedHeader** cache = &_cache;
-        while (*cache) cache = &(*cache)->next;
-        *cache = new CachedHeader();
-        (*cache)->header = hdr;
-        (*cache)->next = 0;
-        
-        ReleaseMutex(_mutex);
-    }
 }
 
 void WaveOut::Start()
 {
-    waveOutRestart(_waveout);
+    _started = true;
+    WAVEHDR* hdr = (WAVEHDR*) calloc(4, sizeof(WAVEHDR));
+    for (int i=0; i<4; i++)
+    {
+        waveOutPrepareHeader(_waveout, hdr + i, sizeof(WAVEHDR));
+        waveOutWrite(_waveout, hdr + i, sizeof(WAVEHDR));
+    }
 }
 
 void WaveOut::Stop()
 {
-    waveOutPause(_waveout);
+    _started = false;
 }
 
 void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, DWORD_PTR p1, DWORD_PTR p2)
@@ -94,18 +67,15 @@ void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, 
             WaveOut* instance = (WaveOut*) userData;
             WAVEHDR* hdr = (WAVEHDR*) p1;
             waveOutUnprepareHeader(waveout, hdr, sizeof(WAVEHDR));
-            free(hdr);
+            
+            if (hdr->lpData) free(hdr->lpData);
 
-            WaitForSingleObject(instance->_mutex, INFINITE);
-            if (instance->_cache)
-            {
-                waveOutPrepareHeader(waveout, instance->_cache->header, sizeof(WAVEHDR));
-                waveOutWrite(waveout, instance->_cache->header, sizeof(WAVEHDR));
-                CachedHeader* to_delete = instance->_cache;
-                instance->_cache = instance->_cache->next;
-                delete to_delete;
-            }
-            ReleaseMutex(instance->_mutex);
-            break;
+            int length, bufferDone = 0;
+            void* buffer;
+            while (!bufferDone) bufferDone = instance->_provider->NextAudioBuffer(&buffer, &length);
+            hdr->dwBufferLength = length;
+            hdr->lpData = (LPSTR) buffer;
+            waveOutPrepareHeader(waveout, hdr, sizeof(WAVEHDR));
+            waveOutWrite(waveout, hdr, sizeof(WAVEHDR));
     }
 }

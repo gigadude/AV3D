@@ -74,7 +74,7 @@ void Video::Load(const char* filename)
     _currentBuffer = (uint8_t*) av_malloc(size * sizeof(uint8_t));
     avpicture_fill((AVPicture*)_currentFrame, _currentBuffer, PIX_FMT_RGB24, _videoCodecCtx->width, _videoCodecCtx->height);
 
-    _waveout = new WaveOut(_audioCodecCtx->sample_rate, _audioCodecCtx->channels, 16);
+    _waveout = new WaveOut(this, _audioCodecCtx->sample_rate, _audioCodecCtx->channels, 16);
 }
 
 void Video::Start()
@@ -97,22 +97,30 @@ void Video::NextFrame()
     av_free(frame);
 }
 
-void Video::NextAudioBuffer()
+int Video::NextAudioBuffer(void** buffer, int* len)
 {
     int bufferDone = 0;
     AVPacket* packet;
-    int16_t* audioBuffer = (int16_t*) av_malloc(AV_AUDIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+    static int16_t* audioBuffer = (int16_t*) av_malloc(AV_AUDIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+
+    *len = 0;
+    *buffer = NULL;
+
     while ((packet = _audioQueue->Dequeue()) != NULL)
     {
         int bufferSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
         int consumed = avcodec_decode_audio3(_audioCodecCtx, audioBuffer, &bufferSize, packet);
-        if (consumed >= 0 && bufferSize > 0)        
+        if (consumed > 0 && bufferSize > 0)        
         {
-            _waveout->AddBuffer(audioBuffer, bufferSize, NULL);
+            bufferDone = 1;
+            *len = bufferSize;
+            *buffer = malloc(bufferSize);
+            memcpy(*buffer, audioBuffer, bufferSize);
             break;
         }
+        av_free_packet(packet);
     }
-    av_free(audioBuffer);
+    return bufferDone;
 }
 
 DWORD WINAPI Video::AVStreamProc(LPVOID data)
@@ -128,8 +136,7 @@ DWORD WINAPI Video::AVStreamProc(LPVOID data)
         if (packet.stream_index == instance->_videoStreamIndex) queue = instance->_videoQueue;
         else if (packet.stream_index == instance->_audioStreamIndex) queue = instance->_audioQueue;
         if (queue) queue->Enqueue(&packet);
-        instance->NextFrame();
-        instance->NextAudioBuffer();
+        //instance->NextFrame();
     }
     return 0;
 }

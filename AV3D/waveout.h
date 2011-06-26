@@ -14,27 +14,28 @@
 
 GENERATE_EXCEPTION(WaveOutException, Exception);
 
-struct CachedHeader
+class AudioProvider
 {
-    WAVEHDR* header;
-    CachedHeader* next;
+    public:
+    virtual int NextAudioBuffer(void** buffer, int* length) = 0;
 };
 
 class WaveOut
 {
     public:
-    WaveOut(int sampleRate, int nrChannels, int bitsPerSample);
+    WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bitsPerSample);
     ~WaveOut();
 
     void Start();
     void Stop();
-    void AddBuffer(const void* data, size_t length, const void* parameter);
 
     private:
-    CachedHeader* _cache;
-    HANDLE _mutex;
+    AudioProvider* _provider;
     HWAVEOUT _waveout;
+    bool _started;
+    int _buffered;
     static void CALLBACK Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, DWORD_PTR p1, DWORD_PTR p2);
+    static DWORD WINAPI WaveOutCacheProc(LPVOID param);
 };
 
 #endif

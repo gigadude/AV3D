@@ -32,7 +32,7 @@ class Frame
 class AVPacketQueueItem
 {
     public:
-    AVPacketQueueItem(AVPacket* packet) { _packet = packet, _next = 0; }
+    AVPacketQueueItem(AVPacket* packet) { _packet = new AVPacket(*packet), _next = 0; }
 
     private:
     AVPacket* _packet;
@@ -92,7 +92,7 @@ class AVPacketQueue
     HANDLE _mutex;
 };
 
-class Video
+class Video : public AudioProvider
 {
     public:
     Video(const char* filename, FRAME_UPDATED_CALLBACK callback);
@@ -107,7 +107,7 @@ class Video
     static DWORD WINAPI AVStreamProc(LPVOID parameter);
     void Load(const char* filename);
     void NextFrame();
-    void NextAudioBuffer();
+    int NextAudioBuffer(void** buffer, int* len);
 
     FRAME_UPDATED_CALLBACK _frameUpdatedCallback;
     
