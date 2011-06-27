@@ -23,7 +23,7 @@ GENERATE_EXCEPTION(WaveOutException, Exception);
 class AudioProvider
 {
     public:
-    virtual int NextAudioBuffer(void** buffer, int* length) = 0;
+    virtual int NextAudioBuffer(void** buffer, int* length, int elapsed) = 0;
 };
 
 class WaveOut

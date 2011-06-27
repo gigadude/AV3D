@@ -43,7 +43,7 @@ class Video : public AudioProvider
 
 	public:
     int NextFrame(void* buffer);
-    int NextAudioBuffer(void** buffer, int* len);
+    int NextAudioBuffer(void** buffer, int* len, int elapsed);
     
 	private:
 	static int GetBuffer(AVCodecContext* c, AVFrame* pic);
@@ -61,9 +61,11 @@ class Video : public AudioProvider
     AVCodec* _audioCodec;
     AVFrame* _currentFrame;
     uint8_t* _currentBuffer;
-	uint64_t _currentPts;
-    uint64_t _currentFramePts;
-    uint64_t _startTime;
+	int64_t _currentPts;
+    int64_t _currentFramePts;
+    int64_t _baseTime;
+    int64_t _audioElapsed;
+
     bool     _started;
     WaveOut* _waveout;
 

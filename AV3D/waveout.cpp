@@ -3,7 +3,7 @@
 WaveOut::WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bitsPerSample)
 {
     _provider = provider;
-
+    
     WAVEFORMATEXTENSIBLE fmt;
 	fmt.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE);
 	fmt.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE ;
@@ -68,7 +68,7 @@ void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, 
 
             int length, bufferDone = 0;
             void* buffer;
-            while (!bufferDone) bufferDone = instance->_provider->NextAudioBuffer(&buffer, &length);
+            while (!bufferDone) bufferDone = instance->_provider->NextAudioBuffer(&buffer, &length, hdr->dwBufferLength);
             if (bufferDone == -1)
             {
                 free(hdr);

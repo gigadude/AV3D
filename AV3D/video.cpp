@@ -95,7 +95,7 @@ int Video::NextFrame(void* buffer)
     AVFrame* frame = avcodec_alloc_frame();
     AVPacket* packet;
 
-    uint64_t msPassed = (1000 * (clock() - _startTime)) / CLOCKS_PER_SEC;
+    int64_t msPassed = (1000 * (clock() - _baseTime)) / CLOCKS_PER_SEC;
     if (msPassed >= _currentPts)
 	{
 		if (_currentFramePts != _currentPts)
@@ -132,7 +132,7 @@ int Video::NextFrame(void* buffer)
 	return result;
 }
 
-int Video::NextAudioBuffer(void** buffer, int* len)
+int Video::NextAudioBuffer(void** buffer, int* len, int elapsed)
 {
     int bufferDone = 0;
     AVPacket* packet;
@@ -140,6 +140,23 @@ int Video::NextAudioBuffer(void** buffer, int* len)
 
     *len = 0;
     *buffer = NULL;
+
+    if (!_started)
+    {
+        _started = true;
+        _baseTime = clock();
+        _currentFramePts = 0;
+        _currentPts = 0;
+        _audioElapsed = 0;
+    }
+    else
+    {
+        _audioElapsed += elapsed / (_audioCodecCtx->channels * sizeof(short));
+        int64_t timeElapsed = (1000 * (clock() - _baseTime))/CLOCKS_PER_SEC;
+        int64_t audioTimeElapsed = (1000 * _audioElapsed) / _audioCodecCtx->sample_rate;
+        
+        _baseTime += (timeElapsed > audioTimeElapsed) ? 1 : -1;
+    }
 
     while ((packet = _audioQueue->Dequeue()) != NULL)
     {
@@ -157,13 +174,7 @@ int Video::NextAudioBuffer(void** buffer, int* len)
         }
         av_free_packet(packet);
     }
-    if (!_started)
-    {
-        _started = true;
-        _startTime = clock();
-        _currentFramePts = 0;
-        _currentPts = 0;
-    }
+    
     return bufferDone;
 }
 
