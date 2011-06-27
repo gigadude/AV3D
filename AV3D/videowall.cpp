@@ -18,15 +18,15 @@ VideoWall::VideoWall(const char* filename)
     _texture->Bind(GL_TEXTURE0);
     _program->BindTexture(GL_TEXTURE0, "_uTexture");
 
-    float aspectRatio = (float)_video->Width() / (float)_video->Height();
+    _aspectRatio = (float)_video->Width() / (float)_video->Height();
 
     short indices[] = {0, 1, 2, 3};
     GLVertex vertices[] = 
     {
-        GLVertex(-aspectRatio , -1, 0, 0, 1),
-        GLVertex(-aspectRatio,  1, 0, 0, 0),
-        GLVertex( aspectRatio, -1, 0, 1, 1),
-        GLVertex( aspectRatio,  1, 0, 1, 0)
+        GLVertex(-_aspectRatio , -1, 0, 0, 1),
+        GLVertex(-_aspectRatio,  1, 0, 0, 0),
+        GLVertex( _aspectRatio, -1, 0, 1, 1),
+        GLVertex( _aspectRatio,  1, 0, 1, 0)
     };
 
     SetVertexBuffer(vertices, 4);
@@ -52,7 +52,7 @@ void VideoWall::Draw()
 
 		glPushMatrix();
         glRotatef(angle, 0, 1, 0);
-		glTranslatef(0, 0, VIDEOWALL_SIDE_OFFSET);
+		glTranslatef(0, 0, VIDEOWALL_SIDE_OFFSET * _aspectRatio);
 			
 		_program->SetUniform(iOpacity, 1.0f);
 		_program->SetUniform(iYOpacity, 0.0f);

@@ -180,6 +180,7 @@ DWORD WINAPI Video::AVStreamProc(LPVOID data)
         if (packet.stream_index == instance->_videoStreamIndex) queue = instance->_videoQueue;
         else if (packet.stream_index == instance->_audioStreamIndex) queue = instance->_audioQueue;
         if (queue) queue->Enqueue(&packet);
+        Sleep(1);
     }
     instance->_videoQueue->Enqueue(NULL);
     instance->_audioQueue->Enqueue(NULL);

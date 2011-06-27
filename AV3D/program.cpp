@@ -13,7 +13,7 @@ class AV3DWindow : public GLWindow
     public:
     AV3DWindow(HINSTANCE hInstance, const char* moviePath) : GLWindow(hInstance, "AV3D", 800, 600)
     {
-        _distance = VIDEOWALL_SIDE_OFFSET + 6;
+        _distance = VIDEOWALL_SIDE_OFFSET + 8;
 		_camera = Vector3D(0, 0,  _distance);
 
         _isMouseDown = false;

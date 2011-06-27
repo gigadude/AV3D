@@ -22,7 +22,7 @@
 #endif
 
 #ifndef VIDEOWALL_SIDE_OFFSET 
-#define VIDEOWALL_SIDE_OFFSET 3
+#define VIDEOWALL_SIDE_OFFSET 2.5f
 #endif
 
 #include <time.h>
@@ -51,6 +51,7 @@ private:
     Video* _video;
     uint8_t* _pixels;
     GLTextureRGB* _texture;
+    float _aspectRatio;
 };
 
 #endif
