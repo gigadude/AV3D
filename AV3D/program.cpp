@@ -84,8 +84,16 @@ class AV3DWindow : public GLWindow
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    GLWindow* window = new AV3DWindow(hInstance, "./phunk.avi");
-    window->Show();
-
-    return window->MainLoop();
+    try
+    {
+        GLWindow* window = new AV3DWindow(hInstance, "./phunk.avi");
+        window->Show();
+        return window->MainLoop();
+    }
+    catch (Exception* e)
+    {
+        MessageBox(NULL, e->Message(), "ERROR", MB_OK);
+        free(e);
+        return -1;
+    }
 }
