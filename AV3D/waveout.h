@@ -20,6 +20,8 @@
 
 GENERATE_EXCEPTION(WaveOutException, Exception);
 
+// Abstract provider class, to make the waveout unaware of the implementation of Video
+// However, the NextAudioBuffer is not general enough to justify this at the moment.
 class AudioProvider
 {
     public:
@@ -32,6 +34,7 @@ class WaveOut
     WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bitsPerSample);
     ~WaveOut();
 
+    // Start audio output
     void Start();
 
     private:

@@ -31,11 +31,13 @@ class GLWindow
     GLWindow(HINSTANCE hInstance, const char* title, int width, int height);
     ~GLWindow();
     
+    // Show the window
     void Show();
+
+    // Blocking call that performs message handling until application stops
     int MainLoop();
 
     protected:
-    virtual void OnLoad() {}
     virtual void OnRender();
     virtual void OnResize(int width, int height);
     virtual void OnKeyDown(int key) {};

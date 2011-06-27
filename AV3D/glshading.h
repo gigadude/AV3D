@@ -25,6 +25,7 @@ enum ShaderType
     ST_FRAGMENT = GL_FRAGMENT_SHADER
 };
 
+// Wrapper around the OpenGL Shader
 class GLShader
 {
     public:
@@ -41,6 +42,7 @@ class GLShader
     friend class GLShaderProgram;
 };
 
+// Wrapper around the OpenGL ShaderProgram
 class GLShaderProgram
 {
     public:

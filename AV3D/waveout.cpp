@@ -46,6 +46,7 @@ WaveOut::WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bi
 void WaveOut::Start()
 {
     _started = true;
+    // Fill the audio device with 4 empty headers
     for (int i=0; i<4; i++)
     {
         WAVEHDR* hdr = (WAVEHDR*) calloc(1, sizeof(WAVEHDR));
@@ -62,24 +63,40 @@ void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, 
             WaveOut* instance = (WaveOut*) userData;
             WAVEHDR* hdr = (WAVEHDR*) p1;
             waveOutUnprepareHeader(waveout, hdr, sizeof(WAVEHDR));
-            
-            if (hdr->lpData) free(hdr->lpData);
-            if (!instance->_started) return;
 
-            int length, bufferDone = 0;
-            void* buffer;
-            while (!bufferDone) bufferDone = instance->_provider->NextAudioBuffer(&buffer, &length, hdr->dwBufferLength);
-            if (bufferDone == -1)
+            // free the previous data buffer
+            if (hdr->lpData) free(hdr->lpData);
+
+            // if we are still playing get a new audio buffer
+            if (instance->_started)
             {
-                free(hdr);
-                instance->_started = false;
+                int length, bufferDone = 0;
+                void* buffer;
+
+                // block until will find a new audio buffer
+                while (!bufferDone) 
+                {
+                    bufferDone = instance->_provider->NextAudioBuffer(&buffer, &length, hdr->dwBufferLength);
+                    Sleep(1);
+                }
+                if (bufferDone == -1)
+                {
+                    // if bufferDone == -1 this marks the end of stream
+                    instance->_started = false;
+                }
+                else
+                {
+                    // else set the new buffer and write the header
+                    hdr->dwBufferLength = length;
+                    hdr->lpData = (LPSTR) buffer;
+                    waveOutPrepareHeader(waveout, hdr, sizeof(WAVEHDR));
+                    waveOutWrite(waveout, hdr, sizeof(WAVEHDR));
+                }
             }
-            else
+            if (!instance->_started)
             {
-                hdr->dwBufferLength = length;
-                hdr->lpData = (LPSTR) buffer;
-                waveOutPrepareHeader(waveout, hdr, sizeof(WAVEHDR));
-                waveOutWrite(waveout, hdr, sizeof(WAVEHDR));
+                // if started was set to false, we may release the header
+                free(hdr);
             }
     }
 }

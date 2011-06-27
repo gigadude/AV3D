@@ -14,6 +14,7 @@
 
 GENERATE_EXCEPTION(TextureException, Exception);
 
+// Wrapper around an OpenGL texture
 class GLTextureRGB
 {
     public:

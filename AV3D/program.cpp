@@ -8,8 +8,6 @@
 
 class AV3DWindow : public GLWindow
 {
-
-
     public:
     AV3DWindow(HINSTANCE hInstance, const char* moviePath) : GLWindow(hInstance, "AV3D", 800, 600)
     {

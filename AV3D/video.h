@@ -31,22 +31,24 @@ class Video : public AudioProvider
     Video(const char* filename, int reqWidth, int reqHeight);
     ~Video();
 
+    // Start playing the video, don't call this twice (for now).
     void Start();
 
     int Width() const { if (_videoCodecCtx) return _videoCodecCtx->width; return 0; }
     int Height() const { if (_videoCodecCtx) return _videoCodecCtx->height; return 0;}
-    const void* PixelBuffer() const { return _currentBuffer; }
 
-    private:
-    static DWORD WINAPI AVStreamProc(LPVOID parameter);
-    void Load(const char* filename);
-
-	public:
+    // The buffer needs to be of size 3 * reqWidth * reqHeight, as specified in the constructor
     int NextFrame(void* buffer);
+
+    // The buffer will be allocated for you, and length will be set.
+    // If this function is called because a audio block just finished playing
+    // set elapsed to the buffersize, so the video can sync to the audio.
     int NextAudioBuffer(void** buffer, int* len, int elapsed);
     
 	private:
-	static int GetBuffer(AVCodecContext* c, AVFrame* pic);
+    void Load(const char* filename);
+    static DWORD WINAPI AVStreamProc(LPVOID parameter);
+    static int GetBuffer(AVCodecContext* c, AVFrame* pic);
     static void ReleaseBuffer(AVCodecContext* c, AVFrame* pic);
 	static uint64_t _s_pts;
 

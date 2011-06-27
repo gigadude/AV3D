@@ -40,9 +40,13 @@ class VideoWall : public GLMesh
     GLShaderProgram *_program;
 
     public:
+    // Construct the video wall with the movie <filename>
     VideoWall(const char* filename);
 
-    void Draw();    
+    // Draw the video wall
+    void Draw();   
+
+    // Start the video
     void Start();
 
 
