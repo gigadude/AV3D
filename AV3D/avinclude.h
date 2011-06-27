@@ -1,5 +1,11 @@
 #pragma once
 
+/* avinclude.h
+ * ----------- 
+ * Author: E. Pronk
+ * Descr.: Includes everything needed for AV decoding
+ */
+
 #ifndef LMTZ_AVINCLUDE_H
 #define LMTZ_AVINCLUDE_H
 

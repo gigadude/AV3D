@@ -1,4 +1,11 @@
 #pragma once
+
+/* exception.h
+ * ----------- 
+ * Author: E. Pronk
+ * Descr.: Base exception class
+ */
+
 #ifndef LMTZ_EXCEPTION_H
 #define LMTZ_EXCEPTION_H
 
@@ -10,7 +17,6 @@
 #define FD_MAX_ERROR_MESSAGE (1<<16)
 #endif
 
-//vsprintf is susceptible to buffer overruns!
 #define GENERATE_EXCEPTION(type, base) \
 		class type : public base \
 		{ \

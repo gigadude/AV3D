@@ -1,5 +1,11 @@
 #pragma once
 
+/* gltexture.h
+ * ----------- 
+ * Author: E. Pronk
+ * Descr.: Defines a texture class using 24bpp RGB format
+ */
+
 #ifndef LMTZ_GLTEXTURE_H
 #define LMTZ_GLTEXTURE_H
 

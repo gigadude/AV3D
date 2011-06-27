@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\videowall.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\waveout.cpp"
 				>
 			</File>

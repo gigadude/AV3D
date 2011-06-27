@@ -3,6 +3,12 @@
 #ifndef LMTZ_GLWINDOW_H
 #define LMTZ_GLWINDOW_H
 
+/* glwindow.h
+ * ----------
+ * Author: E. Pronk
+ * Descr.: Base class for an OpenGL window
+ */
+
 #include <windows.h>
 #include <windowsx.h>
 #include "glinclude.h"

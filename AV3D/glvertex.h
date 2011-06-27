@@ -1,5 +1,11 @@
 #pragma once
 
+/* glvertex.h
+ * ---------- 
+ * Author: E. Pronk
+ * Descr.: Our basic vertex declaration
+ */
+
 #ifndef LMTZ_GLVERTEX_H
 #define LMTZ_GLVERTEX_H
 

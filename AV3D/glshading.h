@@ -1,5 +1,11 @@
 #pragma once
 
+/* glshading.h
+ * ----------- 
+ * Author: E. Pronk
+ * Descr.: Everything needed for shaders
+ */
+
 #ifndef LMTZ_SHADING_H
 #define LMTZ_SHADING_H
 
@@ -27,7 +33,7 @@ class GLShader
     ~GLShader();
 
     protected:
-    void SetSource(const char* sourceCode);
+    void SetSource(const char* sourceCode, size_t size);
 
     private:
     GLuint _name;

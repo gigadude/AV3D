@@ -59,6 +59,10 @@ void GLWindow::OnRender()
 void GLWindow::OnResize(int width, int height)
 {
     glViewport(0, 0, width, height);
+    
+    glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective (50.0, (float)width/(float)height, 0.1, 100);
 }
 
 LRESULT CALLBACK GLWindow::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

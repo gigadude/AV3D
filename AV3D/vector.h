@@ -1,5 +1,11 @@
 #pragma once
 
+/* vector.h
+ * -------- 
+ * Author: E. Pronk
+ * Descr.: Basic vector math
+ */
+
 #ifndef LMTZ_VECTOR_H
 #define LMTZ_VECTOR_H
 
@@ -9,10 +15,6 @@ class Vector4D;
 
 #include <math.h>
 
-/* Vector2D
- * --------
- * 2-dimensional vector. (X, Y)
- */
 class Vector2D
 {
 	public:
@@ -46,10 +48,6 @@ class Vector2D
 	};
 };
 
-/* Vector2D
- * --------
- * 3-dimensional vector. (X, Y, Z)
- */
 class Vector3D
 {
 	public:
@@ -88,11 +86,6 @@ class Vector3D
 	};
 };
 
-/* Vector4D
- * --------
- * 4-dimensional vector. (X, Y, Z) + [W]
- * Acts like a 3D vector with W component for perspective
- */
 class Vector4D
 {
 	public:

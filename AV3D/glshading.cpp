@@ -5,7 +5,7 @@
 GLShader::GLShader(ShaderType type, const char* sourceCode)
 {   
     _name = glCreateShader((GLenum)type);
-    SetSource(sourceCode);    
+    SetSource(sourceCode, 0);    
 }
 
 GLShader::GLShader(ShaderType type, int resourceId)
@@ -14,15 +14,16 @@ GLShader::GLShader(ShaderType type, int resourceId)
 
     HRSRC resource = FindResource(NULL, MAKEINTRESOURCE(resourceId), "Shader");
     HGLOBAL global = LoadResource(NULL, resource);
+	DWORD size = SizeofResource(NULL, resource);
     char* sourceCode = (char*) LockResource(global);
-    SetSource(sourceCode);
+    SetSource(sourceCode, size);
 }
 
-void GLShader::SetSource(const char* sourceCode)
+void GLShader::SetSource(const char* sourceCode, size_t size)
 {
     int status = GL_FALSE;
     
-    glShaderSource(_name, 1, &sourceCode, 0);
+    glShaderSource(_name, 1, &sourceCode, ((GLint*)&size));
     glCompileShader(_name);
     glGetShaderiv(_name, GL_COMPILE_STATUS, &status);
 
@@ -97,7 +98,7 @@ void GLShaderProgram::Link()
 	}
     glLinkProgram(_name);
     glGetProgramiv(_name, GL_LINK_STATUS, &status);
-    if (status == GL_FALSE) throw new ShaderLinkException();
+    if (status == GL_FALSE) throw new ShaderLinkException("Linking the shader failed");
     _isLinked = true;
 }
 

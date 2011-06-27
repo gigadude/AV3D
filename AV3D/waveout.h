@@ -1,5 +1,11 @@
 #pragma once
 
+/* waveout.h
+ * --------- 
+ * Author: E. Pronk
+ * Descr.: Handles all sound related tasks
+ */
+
 #ifndef LMTZ_WAVEOUT_H
 #define LMTZ_WAVEOUT_H
 
@@ -27,7 +33,6 @@ class WaveOut
     ~WaveOut();
 
     void Start();
-    void Stop();
 
     private:
     AudioProvider* _provider;

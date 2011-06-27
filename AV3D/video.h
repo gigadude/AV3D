@@ -1,5 +1,11 @@
 #pragma once
 
+/* video.h
+ * ------- 
+ * Author: E. Pronk
+ * Descr.: Video object that handles all the video tasks
+ */
+
 #ifndef LMTZ_VIDEO_H
 #define LMTZ_VIDEO_H
 
@@ -9,11 +15,64 @@
 #include "exception.h"
 
 class Video;
+class AVPacketQueueItem;
+class AVPacketQueue;
 
+#ifndef AV_AUDIO_BUFFER_SIZE 
 #define AV_AUDIO_BUFFER_SIZE AVCODEC_MAX_AUDIO_FRAME_SIZE
+#endif
 
 GENERATE_EXCEPTION(FileNotFoundException, Exception);
 GENERATE_EXCEPTION(AVStreamException, Exception);
+
+class Video : public AudioProvider
+{
+    public:
+    Video(const char* filename, int reqWidth, int reqHeight);
+    ~Video();
+
+    void Start();
+
+    int Width() const { if (_videoCodecCtx) return _videoCodecCtx->width; return 0; }
+    int Height() const { if (_videoCodecCtx) return _videoCodecCtx->height; return 0;}
+    const void* PixelBuffer() const { return _currentBuffer; }
+
+    private:
+    static DWORD WINAPI AVStreamProc(LPVOID parameter);
+    void Load(const char* filename);
+
+	public:
+    int NextFrame(void* buffer);
+    int NextAudioBuffer(void** buffer, int* len);
+    
+	private:
+	static int GetBuffer(AVCodecContext* c, AVFrame* pic);
+    static void ReleaseBuffer(AVCodecContext* c, AVFrame* pic);
+	static uint64_t _s_pts;
+
+	AVPacketQueue* _audioQueue;
+    AVPacketQueue* _videoQueue;
+    
+    SwsContext* _swsCtx;
+    AVFormatContext* _formatCtx;
+    AVCodecContext* _videoCodecCtx;
+    AVCodecContext* _audioCodecCtx;
+    AVCodec* _videoCodec;
+    AVCodec* _audioCodec;
+    AVFrame* _currentFrame;
+    uint8_t* _currentBuffer;
+	uint64_t _currentPts;
+    uint64_t _currentFramePts;
+    uint64_t _startTime;
+    bool     _started;
+    WaveOut* _waveout;
+
+    int _reqWidth, _reqHeight;
+    int _videoStreamIndex, _audioStreamIndex;
+};
+
+
+#pragma region Inline classes
 
 class AVPacketQueueItem
 {
@@ -83,40 +142,6 @@ class AVPacketQueue
     HANDLE _mutex;
 };
 
-class Video : public AudioProvider
-{
-    public:
-    Video(const char* filename, int reqWidth, int reqHeight);
-    ~Video();
-
-    void Start();
-    void Stop();
-
-    const void* PixelBuffer() const { return _currentBuffer; }
-
-    private:
-    static DWORD WINAPI AVStreamProc(LPVOID parameter);
-    void Load(const char* filename);
-
-public:
-    int NextFrame();
-    int NextAudioBuffer(void** buffer, int* len);
-    
-    AVPacketQueue* _audioQueue;
-    AVPacketQueue* _videoQueue;
-    
-    SwsContext* _swsCtx;
-    AVFormatContext* _formatCtx;
-    AVCodecContext* _videoCodecCtx;
-    AVCodecContext* _audioCodecCtx;
-    AVCodec* _videoCodec;
-    AVCodec* _audioCodec;
-    AVFrame* _currentFrame;
-    uint8_t* _currentBuffer;
-    WaveOut* _waveout;
-
-    int _reqWidth, _reqHeight;
-    int _videoStreamIndex, _audioStreamIndex;
-};
+#pragma endregion
 
 #endif

@@ -1,5 +1,11 @@
 #pragma once
 
+/* glmesh.h
+ * -------- 
+ * Author: E. Pronk
+ * Descr.: Base OpenGL mesh object using triangle strip and index buffer
+ */
+
 #ifndef LMTZ_GLMESH_H
 #define LMTZ_GLMESH_H
 

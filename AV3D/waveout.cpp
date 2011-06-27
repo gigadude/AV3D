@@ -54,11 +54,6 @@ void WaveOut::Start()
     }
 }
 
-void WaveOut::Stop()
-{
-    _started = false;
-}
-
 void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, DWORD_PTR p1, DWORD_PTR p2)
 {
     switch (msg)
@@ -69,6 +64,7 @@ void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, 
             waveOutUnprepareHeader(waveout, hdr, sizeof(WAVEHDR));
             
             if (hdr->lpData) free(hdr->lpData);
+            if (!instance->_started) return;
 
             int length, bufferDone = 0;
             void* buffer;
@@ -76,6 +72,7 @@ void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, 
             if (bufferDone == -1)
             {
                 free(hdr);
+                instance->_started = false;
             }
             else
             {
