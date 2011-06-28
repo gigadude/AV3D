@@ -211,8 +211,8 @@ DWORD WINAPI Video::AVStreamProc(LPVOID data)
         else if (packet.stream_index == instance->_audioStreamIndex) queue = instance->_audioQueue;
         if (queue) queue->Enqueue(&packet);
 
-        // Let's not burn our CPU, this will be sufficient to buffer a nice number of packets in the queue
-        Sleep(1);
+        // Let's not burn our CPU, this will be sufficient to buffer a nice number of packets in the queue, if your CPU is FAST enough
+        // Sleep(1);
     }
 
     //Add NULL packets to the queues which will signal end of stream to the application when dequeued
