@@ -19,7 +19,7 @@ float rand(vec2 co)
 
 void main()
 {
-	float intensity = min(max(dot(_vNormal, vec3(0, 0, -1)), 0), 1);
+	float intensity = max(dot(normalize(_vNormal), vec3(0, 0, -1)), 0);
 	float mirror = (_uOpacity + _vTexCoord.y * _uYOpacity);
 	intensity *= intensity;
 	mirror *= mirror;
