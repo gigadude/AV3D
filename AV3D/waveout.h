@@ -11,6 +11,7 @@
 
 #pragma comment(lib, "winmm")
 
+#include <stdint.h>
 #include <windows.h>
 #include <MMReg.h>
 #include <ks.h>
@@ -25,7 +26,7 @@ GENERATE_EXCEPTION(WaveOutException, Exception);
 class AudioProvider
 {
     public:
-    virtual int NextAudioBuffer(void** buffer, int* length, int elapsed) = 0;
+    virtual int NextAudioBuffer(void** buffer, int* length, uint64_t bufferSize) = 0;
 };
 
 class WaveOut

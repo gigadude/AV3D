@@ -5,37 +5,37 @@ WaveOut::WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bi
     _provider = provider;
     
     WAVEFORMATEXTENSIBLE fmt;
-	fmt.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE);
-	fmt.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE ;
-	fmt.Format.nChannels = nrChannels;
-	fmt.Format.nSamplesPerSec = sampleRate;
-	fmt.Format.wBitsPerSample = bitsPerSample;
-	fmt.Format.nBlockAlign = (fmt.Format.wBitsPerSample >> 3) * fmt.Format.nChannels;
-	fmt.Format.nAvgBytesPerSec = fmt.Format.nBlockAlign * fmt.Format.nSamplesPerSec;
+    fmt.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE);
+    fmt.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE ;
+    fmt.Format.nChannels = nrChannels;
+    fmt.Format.nSamplesPerSec = sampleRate;
+    fmt.Format.wBitsPerSample = bitsPerSample;
+    fmt.Format.nBlockAlign = (fmt.Format.wBitsPerSample >> 3) * fmt.Format.nChannels;
+    fmt.Format.nAvgBytesPerSec = fmt.Format.nBlockAlign * fmt.Format.nSamplesPerSec;
 
     switch (nrChannels)
     {
-        case 1:
+    case 1:
         fmt.dwChannelMask = KSAUDIO_SPEAKER_MONO;
         break;
 
-        case 2:
-	    fmt.dwChannelMask = KSAUDIO_SPEAKER_STEREO;
+    case 2:
+	fmt.dwChannelMask = KSAUDIO_SPEAKER_STEREO;
         break;
 
-        default:
+    default:
         throw new WaveOutException("%d channel audio is not supported", nrChannels);
     }
 
-	fmt.Samples.wValidBitsPerSample = fmt.Format.wBitsPerSample;
+    fmt.Samples.wValidBitsPerSample = fmt.Format.wBitsPerSample;
     switch (bitsPerSample)
     {
-        case 32:
+    case 32:
         fmt.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
         break;
 
-        default:
-	    fmt.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    default:
+	fmt.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
         break;
     }
 	
@@ -45,58 +45,59 @@ WaveOut::WaveOut(AudioProvider* provider, int sampleRate, int nrChannels, int bi
 
 void WaveOut::Start()
 {
-    _started = true;
-    // Fill the audio device with 4 empty headers
+    // Fill the audio device with 4 empty headers (XXX stereo double-buffer?)
     for (int i=0; i<4; i++)
     {
         WAVEHDR* hdr = (WAVEHDR*) calloc(1, sizeof(WAVEHDR));
         waveOutPrepareHeader(_waveout, hdr, sizeof(WAVEHDR));
         waveOutWrite(_waveout, hdr, sizeof(WAVEHDR));
     }
+    _started = true;
+    OutputDebugString("WaveOut::Start()\n");
 }
 
 void CALLBACK WaveOut::Callback(HWAVEOUT waveout, UINT msg, DWORD_PTR userData, DWORD_PTR p1, DWORD_PTR p2)
 {
     switch (msg)
     {
-        case WOM_DONE:
-            WaveOut* instance = (WaveOut*) userData;
-            WAVEHDR* hdr = (WAVEHDR*) p1;
-            waveOutUnprepareHeader(waveout, hdr, sizeof(WAVEHDR));
+    case WOM_DONE:
+        WaveOut* instance = (WaveOut*) userData;
+        WAVEHDR* hdr = (WAVEHDR*) p1;
+        waveOutUnprepareHeader(waveout, hdr, sizeof(WAVEHDR));
 
-            // free the previous data buffer
-            if (hdr->lpData) free(hdr->lpData);
+        // free the previous data buffer
+        if (hdr->lpData) free(hdr->lpData);
 
-            // if we are still playing get a new audio buffer
-            if (instance->_started)
+        // if we are still playing get a new audio buffer
+        if (instance->_started)
+        {
+            int length, bufferDone = 0;
+            void* buffer;
+
+            // block until will find a new audio buffer
+            while (!bufferDone) 
             {
-                int length, bufferDone = 0;
-                void* buffer;
-
-                // block until will find a new audio buffer
-                while (!bufferDone) 
-                {
-                    bufferDone = instance->_provider->NextAudioBuffer(&buffer, &length, hdr->dwBufferLength);
-                    Sleep(1);
-                }
-                if (bufferDone == -1)
-                {
-                    // if bufferDone == -1 this marks the end of stream
-                    instance->_started = false;
-                }
-                else
-                {
-                    // else set the new buffer and write the header
-                    hdr->dwBufferLength = length;
-                    hdr->lpData = (LPSTR) buffer;
-                    waveOutPrepareHeader(waveout, hdr, sizeof(WAVEHDR));
-                    waveOutWrite(waveout, hdr, sizeof(WAVEHDR));
-                }
+                bufferDone = instance->_provider->NextAudioBuffer(&buffer, &length, hdr->dwBufferLength);
+                Sleep(1);
             }
-            if (!instance->_started)
+            if (bufferDone == -1)
             {
-                // if started was set to false, we may release the header
-                free(hdr);
+                // if bufferDone == -1 this marks the end of stream
+                instance->_started = false;
             }
+            else
+            {
+                // else set the new buffer and write the header
+                hdr->dwBufferLength = length;
+                hdr->lpData = (LPSTR) buffer;
+                waveOutPrepareHeader(waveout, hdr, sizeof(WAVEHDR));
+                waveOutWrite(waveout, hdr, sizeof(WAVEHDR));
+            }
+        }
+        if (!instance->_started)
+        {
+            // if started was set to false, we may release the header
+            free(hdr);
+        }
     }
 }

@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
+#include <direct.h>
 
 #include "avinclude.h"
 #include "glinclude.h"
@@ -86,7 +87,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     try
     {
-        GLWindow* window = new AV3DWindow(hInstance, "./phunk.avi");
+        GLWindow* window = new AV3DWindow(hInstance, "../test.mp4");
         window->Show();
         return window->MainLoop();
     }

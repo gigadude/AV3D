@@ -37,7 +37,11 @@ VideoWall::VideoWall(const char* filename)
 
 void VideoWall::Draw()
 {
-    if (_video->NextFrame(_pixels) == 1) _texture->Update();
+    int status = _video->NextFrame(_pixels);
+    if (status == 1)
+    {
+        _texture->Update();
+    }
     
     int iOpacity = _program->GetUniformIndex("_uOpacity");
     int iYOpacity = _program->GetUniformIndex("_uYOpacity");
@@ -46,27 +50,27 @@ void VideoWall::Draw()
     _program->SetUniform(iTime, clock() / (CLOCKS_PER_SEC * 5.0f));
 
     for (int i = 0; i < VIDEOWALL_NR_SIDES; i++)
-	{
+    {
         float angle = 10.0f * clock()/CLOCKS_PER_SEC;
         angle += i * 360.0f / VIDEOWALL_NR_SIDES;
 
-		glPushMatrix();
+        glPushMatrix();
         glRotatef(angle, 0, 1, 0);
-		glTranslatef(0, 0, VIDEOWALL_SIDE_OFFSET * _aspectRatio);
+        glTranslatef(0, 0, VIDEOWALL_SIDE_OFFSET * _aspectRatio);
 			
-		_program->SetUniform(iOpacity, 1.0f);
-		_program->SetUniform(iYOpacity, 0.0f);
-		GLMesh::Draw();
+        _program->SetUniform(iOpacity, 1.0f);
+        _program->SetUniform(iYOpacity, 0.0f);
+        GLMesh::Draw();
 
-		glTranslatef(0.0f, -2.1f, 0.0f);
-		glScalef(1, -1, 1);
+        glTranslatef(0.0f, -2.1f, 0.0f);
+        glScalef(1, -1, 1);
 
-		_program->SetUniform(iOpacity, 0.0f);
-		_program->SetUniform(iYOpacity, 0.5f);
-		GLMesh::Draw();
+        _program->SetUniform(iOpacity, 0.0f);
+        _program->SetUniform(iYOpacity, 0.5f);
+        GLMesh::Draw();
 
-		glPopMatrix();
-	}
+        glPopMatrix();
+    }
 }
 
 void VideoWall::Start()

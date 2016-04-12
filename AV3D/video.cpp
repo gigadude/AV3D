@@ -18,7 +18,7 @@ Video::Video(const char* filename, int reqWidth, int reqHeight)
     _videoQueue = new AVPacketQueue();
     _audioQueue = new AVPacketQueue();
 
-	_started = false;
+    _started = false;
 
     Load(filename);
 }
@@ -38,12 +38,12 @@ void Video::Load(const char* filename)
     {
         switch (_formatCtx->streams[i]->codec->codec_type)
         {
-            case AVMEDIA_TYPE_VIDEO:
-                if (_videoStreamIndex == -1) _videoStreamIndex = i;
-                break;
-            case AVMEDIA_TYPE_AUDIO:
-                if (_audioStreamIndex == -1) _audioStreamIndex = i;
-                break;
+        case AVMEDIA_TYPE_VIDEO:
+            if (_videoStreamIndex == -1) _videoStreamIndex = i;
+            break;
+        case AVMEDIA_TYPE_AUDIO:
+            if (_audioStreamIndex == -1) _audioStreamIndex = i;
+            break;
         }
     }
 
@@ -55,8 +55,8 @@ void Video::Load(const char* filename)
     _videoCodecCtx = _formatCtx->streams[_videoStreamIndex]->codec;
     _videoCodec = avcodec_find_decoder(_videoCodecCtx->codec_id);
     if (!_videoCodec) throw new AVStreamException("Could not find video decoder \"%s\"", _videoCodecCtx->codec_name);
-	_videoCodecCtx->get_buffer = Video::GetBuffer;
-	_videoCodecCtx->release_buffer = Video::ReleaseBuffer;
+    _videoCodecCtx->get_buffer = Video::GetBuffer;
+    _videoCodecCtx->release_buffer = Video::ReleaseBuffer;
 
     // Get the audio codec
     _audioCodecCtx = _formatCtx->streams[_audioStreamIndex]->codec;
@@ -92,11 +92,13 @@ void Video::Start()
     CreateThread(NULL, 0, AVStreamProc, this, NULL, NULL);
 }
 
+const static int SCALE = 1;
+
 int Video::NextFrame(void* buffer)
 {
     int frameDone = 0;
-	int result = 0;
-	double pts = 0;
+    int result = 0;
+    double pts = 0;
 
     if (!_started) return 0;
 
@@ -104,47 +106,50 @@ int Video::NextFrame(void* buffer)
     AVPacket* packet;
 
     // Get the number of milliseconds passed and see if we should display a new frame
-    int64_t msPassed = (1000 * (clock() - _baseTime)) / CLOCKS_PER_SEC;
-    if (msPassed >= _currentPts)
-	{
+    double elapsedMs = SCALE * (1000.0 / CLOCKS_PER_SEC) * clock() - _baseTimeMs;
+
+    //char buff[256];
+    //sprintf(buff, "ms %f frame pts %f current pts %f\n", elapsedMs, _lastDisplayedMs, _currentFrameMs);
+    //OutputDebugString(buff);
+
+    if (elapsedMs >= _currentFrameMs)
+    {
         // If this is not the current frame, copy it to the buffer
-		if (_currentFramePts != _currentPts)
-		{
-            _currentFramePts = _currentPts;
-			memcpy(buffer, _currentBuffer, 3 * _reqWidth * _reqHeight);
-			result = 1;
-		}
+        if (_lastDisplayedMs != _currentFrameMs)
+        {
+            _lastDisplayedMs = _currentFrameMs;
+            memcpy(buffer, _currentBuffer, 3 * _reqWidth * _reqHeight);
+            result = 1;
+        }
 	
         // Try to load a new frame from the video packet queue
-		while (!frameDone && (packet = _videoQueue->Dequeue()) != NULL)
-		{
-			if (packet == (AVPacket*)-1) return -1;
+        while (!frameDone && (packet = _videoQueue->Dequeue()) != NULL)
+        {
+            if (packet == (AVPacket*)-1) return -1;
 
-			_s_pts = packet->pts;
-			avcodec_decode_video2(_videoCodecCtx, frame, &frameDone, packet);
-			av_free_packet(packet);
+            _s_pts = packet->pts;
+            int err = avcodec_decode_video2(_videoCodecCtx, frame, &frameDone, packet);
+            av_free_packet(packet);
 
-			if (packet->dts == AV_NOPTS_VALUE)
-			{
-				if (frame->opaque && *(uint64_t*)frame->opaque != AV_NOPTS_VALUE) pts = (double) *(uint64_t*)frame->opaque;
-				else pts = 0;
-			}
-			else pts = (double) packet->dts;
-            
-			pts *= av_q2d(_videoCodecCtx->time_base);
-		}
-		if (frameDone)
-		{
+            if (packet->dts == AV_NOPTS_VALUE)
+            {
+	        if (frame->opaque && *(uint64_t*)frame->opaque != AV_NOPTS_VALUE) pts = (double) *(uint64_t*)frame->opaque;
+	        else pts = 0;
+            }
+            else pts = packet->dts * av_q2d(_videoCodecCtx->time_base);
+        }
+        if (frameDone)
+        {
             // if a frame was loaded scale it to the current texture frame buffer, but also set the pts so that it won't be copied to the texture until it's time
-			sws_scale(_swsCtx, frame->data, frame->linesize, 0, _videoCodecCtx->height, _currentFrame->data, _currentFrame->linesize);
-			_currentPts = (uint64_t) (pts * 1000);
-		}
-		av_free(frame);
-	}
-	return result;
+            sws_scale(_swsCtx, frame->data, frame->linesize, 0, _videoCodecCtx->height, _currentFrame->data, _currentFrame->linesize);
+            _currentFrameMs = pts;
+        }
+        av_free(frame);
+    }
+    return result;
 }
 
-int Video::NextAudioBuffer(void** buffer, int* len, int elapsed)
+int Video::NextAudioBuffer(void** buffer, int* len, uint64_t bufferSize)
 {
     int bufferDone = 0;
     AVPacket* packet;
@@ -175,22 +180,23 @@ int Video::NextAudioBuffer(void** buffer, int* len, int elapsed)
     {
         // First time we get an audio buffer, set up our params
         _started = true;
-        _baseTime = clock();
-        _currentFramePts = 0;
-        _currentPts = 0;
-        _audioElapsed = 0;
+        _baseTimeMs = (1000.0 / CLOCKS_PER_SEC) * clock();
+        _currentFrameMs = 0;
+        _lastDisplayedMs = 0;
+        _audioSamplesPlayed = 0;
     }
     else if (bufferDone)
     {
         // See how much time should have elapsed based on how many audio samples were played up to this point
         // Then check it against our own clock
-        _audioElapsed += elapsed / (_audioCodecCtx->channels * sizeof(short));
-        int64_t timeElapsed = (1000 * (clock() - _baseTime))/CLOCKS_PER_SEC;
-        int64_t audioTimeElapsed = (1000 * _audioElapsed) / _audioCodecCtx->sample_rate;
+        _audioSamplesPlayed += bufferSize / (_audioCodecCtx->channels * sizeof(short));
+        double elapsedMs = SCALE * (1000.0 / CLOCKS_PER_SEC) * clock() - _baseTimeMs;
+        double samplesElapsedMs = (1000.0 * _audioSamplesPlayed) / _audioCodecCtx->sample_rate;
         
         // If our clock is out of sync with the audio we add or subtract some time from our base time
         // this will have its effect on the GetNextFrame function.
-        _baseTime += (timeElapsed > audioTimeElapsed) ? 1 : -1;
+        // Adjust by at most 10% per frame
+        _baseTimeMs += (elapsedMs - samplesElapsedMs) / 10;
     }
     
     return bufferDone;
@@ -202,17 +208,42 @@ DWORD WINAPI Video::AVStreamProc(LPVOID data)
     instance->_waveout->Start();
     
     AVPacket packet;
-    
+
+    const int max_qsize = 10000;
     while (av_read_frame(instance->_formatCtx, &packet) >= 0)
     {
         // Keep reading packets and split them into queues
         AVPacketQueue* queue = 0;
-        if (packet.stream_index == instance->_videoStreamIndex) queue = instance->_videoQueue;
-        else if (packet.stream_index == instance->_audioStreamIndex) queue = instance->_audioQueue;
-        if (queue) queue->Enqueue(&packet);
-
-        // Let's not burn our CPU, this will be sufficient to buffer a nice number of packets in the queue, if your CPU is FAST enough
-        // Sleep(1);
+        if (packet.stream_index == instance->_videoStreamIndex)
+        {
+            queue = instance->_videoQueue;
+        }
+        else if (packet.stream_index == instance->_audioStreamIndex)
+        {
+            queue = instance->_audioQueue;
+        }
+        if (queue)
+        {
+            queue->Enqueue(&packet);
+            auto cnt = queue->Count();
+#if 0
+            static int pcnt = 0;
+            char buff[256];
+            sprintf(buff, "Queuing %d @%lld\n", pcnt++, cnt);
+            OutputDebugString(buff);
+            // Let's not burn our CPU, this will be sufficient to buffer a nice number of packets in the queue, if your CPU is FAST enough
+            while (cnt > max_qsize)
+            {
+                char buff[256];
+                sprintf(buff, "Sleep for count %lld\n", cnt);
+                OutputDebugString(buff);
+                Sleep(10);
+                cnt = queue->Count();
+            }
+#else
+            ::Sleep(1);
+#endif
+        }
     }
 
     //Add NULL packets to the queues which will signal end of stream to the application when dequeued

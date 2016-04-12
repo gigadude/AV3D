@@ -43,16 +43,16 @@ class Video : public AudioProvider
     // The buffer will be allocated for you, and length will be set.
     // If this function is called because a audio block just finished playing
     // set elapsed to the buffersize, so the video can sync to the audio.
-    int NextAudioBuffer(void** buffer, int* len, int elapsed);
+    int NextAudioBuffer(void** buffer, int* len, uint64_t bufferSize);
     
-	private:
+private:
     void Load(const char* filename);
     static DWORD WINAPI AVStreamProc(LPVOID parameter);
     static int GetBuffer(AVCodecContext* c, AVFrame* pic);
     static void ReleaseBuffer(AVCodecContext* c, AVFrame* pic);
-	static uint64_t _s_pts;
+    static uint64_t _s_pts;
 
-	AVPacketQueue* _audioQueue;
+    AVPacketQueue* _audioQueue;
     AVPacketQueue* _videoQueue;
     
     SwsContext* _swsCtx;
@@ -63,10 +63,10 @@ class Video : public AudioProvider
     AVCodec* _audioCodec;
     AVFrame* _currentFrame;
     uint8_t* _currentBuffer;
-	int64_t _currentPts;
-    int64_t _currentFramePts;
-    int64_t _baseTime;
-    int64_t _audioElapsed;
+    double _currentFrameMs;
+    double _lastDisplayedMs;
+    double _baseTimeMs;
+    uint64_t _audioSamplesPlayed;
 
     bool     _started;
     WaveOut* _waveout;
@@ -74,7 +74,6 @@ class Video : public AudioProvider
     int _reqWidth, _reqHeight;
     int _videoStreamIndex, _audioStreamIndex;
 };
-
 
 #pragma region Inline classes
 
@@ -97,10 +96,11 @@ class AVPacketQueueItem
 
 class AVPacketQueue
 {
-    public:
-    AVPacketQueue()  
+public:
+    AVPacketQueue() :
+        _count(0),
+        _first(NULL)
     { 
-        _first = NULL;
         _mutex = CreateMutex(NULL, FALSE, NULL); 
     }
     
@@ -123,6 +123,7 @@ class AVPacketQueue
         AVPacketQueueItem** ptr = &_first; 
         while (*ptr) ptr = &(*ptr)->_next; 
         *ptr = new AVPacketQueueItem(packet);
+        ++_count;
         ReleaseMutex(_mutex);
     }
 
@@ -136,12 +137,19 @@ class AVPacketQueue
             void* del = _first;
             _first = _first->_next;
             delete del;
+            --_count;
         }
         ReleaseMutex(_mutex);
         return result;
     }
 
-    private:
+    uint64_t Count()
+    {
+        return _count;
+    }
+
+private:
+    uint64_t _count;
     AVPacketQueueItem* _first;
     HANDLE _mutex;
 };
